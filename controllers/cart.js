@@ -12,7 +12,6 @@ const prepareCart = (productsArray) => {
     cartTotalAfterDiscount += item.price * (1 - parseInt(item.discount) / 100) * item.count;
     products.push({
       product: item._id,
-      color: item.color,
       count: parseInt(item.count),
       price: parseInt(item.price),
       discount: parseInt(item.discount),
@@ -33,10 +32,10 @@ const recalculate = (productsArray) => {
     cartTotalAfterDiscount,
   };
 };
-const update = (products, item_id, operation, color) => {
+const update = (products, item_id, operation) => {
   products.forEach((item, i) => {
     let updated_item = {};
-    if (item.product._id == item_id && item.color === color) {
+    if (item.product._id == item_id) {
       if (operation === 'add') {
         updated_item = {
           ...item,
@@ -118,7 +117,6 @@ exports.saveForLater = async (req, res) => {
   let products = [];
   products.push({
     product: item._id,
-    color: item.color,
     count: parseInt(item.count),
     price: parseInt(item.price),
     discount: parseInt(item.discount),

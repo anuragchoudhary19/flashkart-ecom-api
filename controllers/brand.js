@@ -8,8 +8,11 @@ exports.create = async (req, res) => {
     const brand = await new Brand({ name, slug: slugify(name).toLowerCase() }).save();
     res.json(brand);
   } catch (err) {
-    res.json(err);
-    res.status(400).send('Brand cannot be created');
+    if (err.codeName === 'DuplicateKey') {
+      res.json('Duplicate brand name not allowed');
+    } else {
+      res.json(err);
+    }
   }
 };
 
@@ -19,8 +22,8 @@ exports.read = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
+  console.log(res);
   const { name } = req.body;
-  console.log(req.body);
   try {
     // if (oldCategory !== category) {
     //   const removedCategory = Brand.findOneAndUpdate(
@@ -38,8 +41,11 @@ exports.update = async (req, res) => {
     res.json(updated);
     console.log(updated);
   } catch (err) {
-    console.log(err);
-    res.status(400).send('Update brand failed');
+    if (err.codeName === 'DuplicateKey') {
+      res.status(400).send('Duplicate brand name not allowed');
+    } else {
+      res.status(400).send(err);
+    }
   }
 };
 exports.remove = async (req, res) => {
@@ -51,7 +57,11 @@ exports.remove = async (req, res) => {
   }
 };
 exports.list = async (req, res) => {
-  const brands = await Brand.find({}).sort({ createdAt: 1 }).populate('products').exec();
+  const brands = await Brand.find({})
+    .sort({ createdAt: 1 })
+    .populate('products')
+    .populate({ path: 'products', populate: { path: 'profile' } })
+    .exec();
   res.json(brands);
 };
 

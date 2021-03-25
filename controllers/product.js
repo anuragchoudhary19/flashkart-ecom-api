@@ -24,11 +24,11 @@ exports.read = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const { name, brand, discount } = req.body;
+  const { name, brand } = req.body;
   try {
     const updated = await Product.findOneAndUpdate(
       { slug: req.params.slug },
-      { name, brand, discount, slug: slugify(name) },
+      { name, brand, slug: slugify(name) },
       { new: true }
     );
     res.json(updated);

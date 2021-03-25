@@ -1,4 +1,5 @@
 const ProductProfile = require('../models/productProfile');
+const User = require('../models/user');
 const Product = require('../models/product');
 const slugify = require('slugify');
 
@@ -37,7 +38,10 @@ exports.remove = async (req, res) => {
 };
 
 exports.read = async (req, res) => {
-  const product = await ProductProfile.findOne({ slug: req.params.slug }).exec();
+  const product = await ProductProfile.findOne({ slug: req.params.slug })
+    .populate({ path: 'reviews', populate: { path: 'postedBy' } })
+    .exec();
+  console.log(product);
   res.json(product);
 };
 
@@ -62,7 +66,7 @@ exports.update = async (req, res) => {
 exports.list = async (req, res) => {
   const { sort, order, page } = req.body;
   const currentPage = page;
-  const perPage = 3;
+  const perPage = 4;
   try {
     const profiles = await ProductProfile.find({})
       .skip((currentPage - 1) * perPage)
@@ -74,5 +78,148 @@ exports.list = async (req, res) => {
     res.json(profiles);
   } catch (err) {
     console.log(err);
+  }
+};
+exports.related = async (req, res) => {
+  const { brand, page } = req.body;
+  console.log(page);
+  const currentPage = page;
+  const perPage = 3;
+  try {
+    const profiles = await ProductProfile.find({})
+      .where({ brand: brand })
+      .skip((currentPage - 1) * perPage)
+      .populate('brand')
+      .populate('product')
+      .limit(perPage)
+      .exec();
+    res.json(profiles);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+exports.rating = async (req, res) => {
+  const product = await ProductProfile.findById(req.params.id).exec();
+  const user = await User.findOne({ email: req.user.email }).exec();
+  const { rating } = req.body;
+
+  //if user has already left a rating ...then push new rating
+  let existingRating = product.ratings.find((ele) => ele.postedBy.toString() === user._id.toString());
+
+  console.log(existingRating);
+  if (existingRating === undefined) {
+    const ratedProduct = await ProductProfile.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: { ratings: { stars: rating, postedBy: user._id } },
+      },
+      { new: true }
+    ).exec();
+    console.log('rating added', ratedProduct);
+    res.json(ratedProduct);
+  } else {
+    const ratingUpdated = await ProductProfile.updateOne(
+      {
+        ratings: { $elemMatch: existingRating },
+      },
+      { $set: { 'ratings.$.stars': rating } },
+      { new: true }
+    );
+    console.log('rating added', ratingUpdated);
+    res.json(ratingUpdated);
+  }
+};
+exports.review = async (req, res) => {
+  const product = await ProductProfile.findById(req.params.id).exec();
+  const user = await User.findOne({ email: req.user.email }).exec();
+  const { review } = req.body;
+
+  //if user has already left a rating ...then push new rating
+  let existingReview = product.reviews.find((ele) => ele.postedBy.toString() === user._id.toString());
+
+  if (existingReview === undefined) {
+    const reviewedProduct = await ProductProfile.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: { reviews: { review, postedBy: user._id, date: new Date().toLocaleDateString() } },
+      },
+      { new: true }
+    ).exec();
+    console.log('review added', reviewedProduct);
+    res.json(reviewedProduct);
+  } else {
+    const reviewUpdated = await ProductProfile.updateOne(
+      {
+        reviews: { $elemMatch: existingReview },
+      },
+      { $set: { 'reviews.$.review': review, date: new Date().toLocaleDateString() } },
+      { new: true }
+    );
+    console.log('rating added', reviewUpdated);
+    res.json(reviewUpdated);
+  }
+};
+
+//SEARCH/FILTER
+
+const handleQuery = async (req, res, query) => {
+  const result = await ProductProfile.find({ $text: { $search: query } }).exec();
+  res.json(result);
+};
+const handlePrice = async (req, res, price) => {
+  try {
+    const result = await ProductProfile.find({
+      price: { $gte: price[0], $lte: price[1] },
+    }).exec();
+    res.json(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const handleBrand = async (req, res, brand) => {
+  try {
+    const result = await ProductProfile.find({ brand }).exec();
+    res.json(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const handleStar = async (req, res, stars) => {
+  ProductProfile.aggregate([
+    {
+      $project: {
+        document: '$$ROOT',
+        floorAverage: {
+          $floor: { $avg: '$ratings.stars' },
+        },
+      },
+    },
+    { $match: { floorAverage: stars } },
+  ]).exec((err, aggregates) => {
+    console.log(aggregates);
+    if (err) console.log('Aggregate', err);
+    ProductProfile.find({ _id: aggregates }).exec((err, products) => {
+      if (err) console.log('Product aggregate error', err);
+      res.json(products);
+    });
+  });
+};
+
+exports.searchFilters = async (req, res) => {
+  const { query, price, brand, stars } = req.body;
+  if (query) {
+    console.log('query', query);
+    await handleQuery(req, res, query);
+  }
+  //price [10,100]
+  if (price !== undefined) {
+    await handlePrice(req, res, price);
+  }
+  if (brand) {
+    await handleBrand(req, res, brand);
+  }
+  if (stars) {
+    await handleStar(req, res, stars);
   }
 };

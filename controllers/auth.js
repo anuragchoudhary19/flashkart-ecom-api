@@ -21,11 +21,12 @@ exports.createOrUpdateUser = async (req, res) => {
 };
 
 exports.currentUser = async (req, res) => {
-  User.findOne({ email: req.user.email })
-    .populate('cart')
-    .exec((err, user) => {
-      console.log(user);
-      if (err) throw new Error(err);
-      res.json(user);
-    });
+  try {
+    const user = await User.findOne({ email: req.user.email }).populate('cart').exec();
+    console.log(user);
+    res.json(user);
+  } catch (error) {
+    res.json(error);
+    console.log(error);
+  }
 };

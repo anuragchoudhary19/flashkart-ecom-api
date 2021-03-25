@@ -50,10 +50,8 @@ const productProfileSchema = new mongoose.Schema(
         enum: ['SINGLE SIM', 'DUAL SIM'],
       },
       network: {
-        type: String,
+        type: Array,
         required: true,
-        trim: true,
-        enum: ['2G', '3G', '4G', '5G'],
       },
       memory: {
         ram: {
@@ -113,8 +111,8 @@ const productProfileSchema = new mongoose.Schema(
           maxlength: 32,
         },
       },
-      colors: {
-        type: Array,
+      color: {
+        type: String,
       },
       camera: {
         front: {
@@ -179,11 +177,9 @@ const productProfileSchema = new mongoose.Schema(
     images: {
       type: Array,
     },
-    rating: [
+    ratings: [
       {
-        stars: {
-          type: Number,
-        },
+        stars: Number,
         postedBy: {
           type: ObjectId,
           ref: 'User',
@@ -192,10 +188,11 @@ const productProfileSchema = new mongoose.Schema(
     ],
     reviews: [
       {
-        name: {
-          type: String,
+        postedBy: {
+          type: ObjectId,
+          ref: 'User',
         },
-        comment: {
+        review: {
           type: String,
           maxlength: 2000,
         },
