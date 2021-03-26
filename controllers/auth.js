@@ -1,5 +1,21 @@
 const User = require('../models/user');
 
+exports.checkDuplicateEmail = async (req, res) => {
+  const { email } = req.body;
+  console.log(req.body);
+  try {
+    const user = await User.findOne({ email }).exec();
+    console.log(user);
+    if (user) {
+      res.json({ duplicate: true });
+    } else {
+      res.json({ duplicate: false });
+    }
+  } catch (error) {
+    res.json(error);
+  }
+};
+
 exports.createOrUpdateUser = async (req, res) => {
   const { name, picture, email } = req.user;
   try {

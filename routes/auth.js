@@ -6,12 +6,13 @@ const router = express.Router();
 
 const { authCheck, adminCheck } = require('../middlewares/auth');
 //controller
-const { createOrUpdateUser, currentUser } = require('../controllers/auth');
+const { checkDuplicateEmail, createOrUpdateUser, currentUser } = require('../controllers/auth');
 
 const mymiddleware = (req, res, next) => {
   console.log('middleware hello');
   next();
 };
+router.post('/email-already-registered', checkDuplicateEmail);
 router.post('/create-or-update-user', authCheck, createOrUpdateUser);
 router.post('/current-user', authCheck, currentUser);
 router.post('/current-admin', authCheck, adminCheck, currentUser);
