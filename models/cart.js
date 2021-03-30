@@ -9,7 +9,6 @@ const cartSchema = new mongoose.Schema(
           type: ObjectId,
           ref: 'ProductProfile',
         },
-        color: String,
         count: Number,
         price: Number,
         discount: { type: Number, default: 0 },

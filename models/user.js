@@ -17,10 +17,17 @@ const userSchema = new mongoose.Schema(
       type: ObjectId,
       ref: 'Cart',
     },
-    savedForLater: {
-      type: ObjectId,
-      ref: 'ProductProfile',
-    },
+    savedForLater: [
+      {
+        product: {
+          type: ObjectId,
+          ref: 'ProductProfile',
+        },
+        count: Number,
+        price: Number,
+        discount: { type: Number, default: 0 },
+      },
+    ],
     wishlist: [{ type: ObjectId, ref: 'ProductProfile' }],
     address: [
       {
