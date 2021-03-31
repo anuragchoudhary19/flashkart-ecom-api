@@ -120,7 +120,7 @@ exports.updateCart = async (req, res) => {
       { new: true }
     ).exec();
     if (updatedCart) {
-      res.json({ updated: true });
+      res.json(updatedCart);
     }
   } catch (err) {
     console.log(err);
