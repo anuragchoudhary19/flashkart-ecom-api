@@ -6,7 +6,7 @@ const router = express.Router();
 
 const { authCheck } = require('../middlewares/auth');
 // controller
-const { addToCart, updateCart, saveForLater, getCart, emptyCart, removeSavedForLater } = require('../controllers/cart');
+const { addToCart, updateCart, saveForLater, getCart, emptyCart } = require('../controllers/cart');
 
 router.post('/user/cart', authCheck, addToCart);
 router.get('/user/cart', authCheck, getCart);
