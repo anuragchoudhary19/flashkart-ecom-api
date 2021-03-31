@@ -15,28 +15,17 @@ mongoose
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false,
+    useUnifiedTopology: true,
   })
   .then((res) => console.log('DB CONNECTED'))
   .catch((err) => console.log('DB CONNECTION ERR', err));
 
 //middleware
 app.use(morgan('dev'));
-app.use(bodyParser.json({ limit: '2mb' }));
-var whitelist = ['http://example1.com', 'http://example2.com'];
-var corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-};
-var corsOptions = {
-  origin: process.env.ORIGIN,
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-app.use(cors(corsOptions));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '2mb' }));
+
+app.use(cors());
 
 //route middleware
 fs.readdirSync('./routes').map((r) => app.use('/api', require('./routes/' + r)));
