@@ -3,11 +3,12 @@ const express = require('express');
 const router = express.Router();
 
 //middlewares
-const { authCheck } = require('../middlewares/auth');
+const { adminCheck, authCheck } = require('../middlewares/auth');
 
 //controllers
 const {
   addAddress,
+  removeAddress,
   createOrder,
   getOrders,
   addToWishlist,
@@ -15,10 +16,14 @@ const {
   removeFromWishList,
 } = require('../controllers/user');
 
-router.post('/user/addAddress', authCheck, addAddress);
+const { updateOrderStatus } = require('../controllers/admin');
+
+router.post('/user/address', authCheck, addAddress);
+router.delete('/user/address/:id', authCheck, removeAddress);
 //orders
 router.post('/user/order', authCheck, createOrder);
 router.get('/user/order', authCheck, getOrders);
+router.post('/admin/order/status', adminCheck, authCheck, updateOrderStatus);
 //wishlist
 router.post('/user/wishlist', authCheck, addToWishlist);
 router.get('/user/wishlist', authCheck, wishlist);

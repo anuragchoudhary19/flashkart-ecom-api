@@ -14,6 +14,21 @@ exports.addAddress = async (req, res) => {
   }
 };
 
+exports.removeAddress = async (req, res) => {
+  const { id } = req.params;
+  // console.log(req.params);
+  try {
+    const user = await User.findOneAndUpdate(
+      { email: req.user.email },
+      { $pull: { address: { _id: id } } },
+      { new: true }
+    );
+    res.json({ deleted: true });
+  } catch (e) {
+    console.log(e);
+  }
+};
+
 exports.createOrder = async (req, res) => {
   const { paymentIntent } = req.body.stripeResponse;
   const user = await User.findOne({ email: req.user.email }).exec();
@@ -33,6 +48,26 @@ exports.createOrder = async (req, res) => {
   console.log('decrement quanlity increment sold----->', updated);
   res.json({ ok: true });
 };
+// exports.cancelOrder = async (req, res) => {
+//   const { orderId } = req.body;
+//   const user = await User.findOne({ email: req.user.email }).exec();
+//   let order = await Order.findOneAndUpdate({ orderedBy: user._id }).exec();
+//   let { products } = await Cart.findOne({ orderedBy: user._id }).exec();
+//   let newOrder = await new Order({ products, paymentIntent, orderedBy: user._id }).save();
+
+//   //decrement quanlity increment sold
+//   let bulkOptions = products.map((item) => {
+//     return {
+//       updateOne: {
+//         filter: { _id: item.product._id },
+//         update: { $inc: { quantity: -item.count, sold: +item.count } },
+//       },
+//     };
+//   });
+//   let updated = await ProductProfile.bulkWrite(bulkOptions, {});
+//   console.log('decrement quanlity increment sold----->', updated);
+//   res.json({ ok: true });
+// };
 
 exports.getOrders = async (req, res) => {
   console.log(req.user);

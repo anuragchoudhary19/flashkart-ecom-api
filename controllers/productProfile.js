@@ -1,6 +1,8 @@
 const ProductProfile = require('../models/productProfile');
 const User = require('../models/user');
+const Brand = require('../models/brand');
 const Product = require('../models/product');
+const _ = require('lodash');
 const slugify = require('slugify');
 
 exports.create = async (req, res) => {
@@ -164,8 +166,21 @@ exports.review = async (req, res) => {
 //SEARCH/FILTER
 
 const handleQuery = async (req, res, query) => {
-  const result = await ProductProfile.find({ $text: { $search: query } }).exec();
-  res.json(result);
+  let results = [];
+  let profilesBasedOnBrand = [];
+  let profilesBasedOnProduct = [];
+  let brand = await Brand.findOne({ $text: { $search: query } }).exec();
+  if (brand) {
+    profilesBasedOnBrand = await ProductProfile.find({ brand: brand._id }).exec();
+  }
+  let product = await Product.findOne({ $text: { $search: query } }).exec();
+  if (product) {
+    profilesBasedOnProduct = await ProductProfile.find({ product: product._id }).exec();
+  }
+  let profiles = await ProductProfile.find({ $text: { $search: query } }).exec();
+  results = [...profiles, ...profilesBasedOnBrand, ...profilesBasedOnProduct];
+  let uniqueProfiles = _.uniqWith(results, _.isEqual);
+  res.json(uniqueProfiles);
 };
 const handlePrice = async (req, res, price) => {
   try {
@@ -180,6 +195,16 @@ const handlePrice = async (req, res, price) => {
 const handleBrand = async (req, res, brand) => {
   try {
     const result = await ProductProfile.find({ brand }).exec();
+    console.log(result);
+    res.json(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const handleProduct = async (req, res, product) => {
+  try {
+    const result = await ProductProfile.find({ product }).exec();
+    console.log(result);
     res.json(result);
   } catch (error) {
     console.log(error);
@@ -207,9 +232,9 @@ const handleStar = async (req, res, stars) => {
 };
 
 exports.searchFilters = async (req, res) => {
-  const { query, price, brand, stars } = req.body;
+  const { query, price, brand, product, stars } = req.body;
   if (query) {
-    console.log('query', query);
+    console.log(query);
     await handleQuery(req, res, query);
   }
   //price [10,100]
@@ -218,6 +243,9 @@ exports.searchFilters = async (req, res) => {
   }
   if (brand) {
     await handleBrand(req, res, brand);
+  }
+  if (product) {
+    await handleProduct(req, res, product);
   }
   if (stars) {
     await handleStar(req, res, stars);

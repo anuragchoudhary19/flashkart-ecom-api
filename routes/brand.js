@@ -15,6 +15,5 @@ router.put('/brand/:slug', authCheck, adminCheck, update);
 router.delete('/brand/:slug', authCheck, adminCheck, remove);
 router.get('/brands', list);
 router.get('/brands-product-profile', listBrandsProductProfile);
-//router.get('/brand/products/:_id', getSubs);
 
 module.exports = router;

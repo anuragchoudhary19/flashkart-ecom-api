@@ -7,6 +7,7 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true,
       unique: true,
+      text: true,
       required: 'Name is required',
       minlength: [2, 'Too short'],
       maxlength: [32, 'Too long'],
@@ -16,6 +17,7 @@ const productSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       index: true,
+      text: true,
     },
     profile: {
       type: ObjectId,

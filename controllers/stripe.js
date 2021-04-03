@@ -10,7 +10,7 @@ exports.createPaymentIntent = async (req, res) => {
   const user = await User.findOne({ email: req.user.email }).exec();
   //get user cart total
   const { cartTotalAfterDiscount } = await Cart.findOne({ orderedBy: user._id }).exec();
-  
+
   const paymentIntent = await stripe.paymentIntents.create({
     amount: cartTotalAfterDiscount * 100,
     currency: 'INR',
@@ -18,3 +18,15 @@ exports.createPaymentIntent = async (req, res) => {
   console.log(paymentIntent);
   res.send({ clientSecret: paymentIntent.client_secret });
 };
+
+// exports.refundPayment = async (req, res) => {
+//   const user = await User.findOne({ email: req.user.email }).exec();
+//   //get user cart total
+//   const order = await Order.findOne({ orderedBy: user._id }).exec();
+
+//   const refund = await stripe.refunds.create({
+//    payment_intent=''
+//   });
+//   console.log(paymentIntent);
+//   res.send({ clientSecret: paymentIntent.client_secret });
+// };

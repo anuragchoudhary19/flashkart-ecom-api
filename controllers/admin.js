@@ -5,7 +5,7 @@ exports.orders = async (req, res) => {
   res.json(orders);
 };
 
-exports.orderStatus = async (req, res) => {
+exports.updateOrderStatus = async (req, res) => {
   const { orderId, orderStatus } = req.body;
   let updated = await Order.findByIdAndUpdate(orderId, { orderStatus }, { new: true }).exec();
   res.json(updated);

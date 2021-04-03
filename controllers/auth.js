@@ -38,7 +38,10 @@ exports.createOrUpdateUser = async (req, res) => {
 
 exports.currentUser = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.user.email }).populate('cart').populate('savedForLater').exec();
+    const user = await User.findOne({ email: req.user.email })
+      .populate('cart')
+      .populate('savedForLater.product')
+      .exec();
     console.log(user);
     res.json(user);
   } catch (error) {

@@ -5,19 +5,14 @@ const router = express.Router();
 //middlewares
 const { authCheck, adminCheck } = require('../middlewares/auth');
 //controller
-const { listDB } = require('../controllers/db');
-const { orders, orderStatus } = require('../controllers/admin');
+// const { listDB } = require('../controllers/db');
+const { orders, updateOrderStatus } = require('../controllers/admin');
 
 //routes
 router.get('/admin/orders', authCheck, adminCheck, orders);
-router.put('/admin/order-status', authCheck, adminCheck, orderStatus);
+router.post('/admin/order/status', authCheck, adminCheck, updateOrderStatus);
 
-// const mymiddleware = (req, res, next) => {
-//   console.log('middleware hello');
-//   next();
-// };
-
-router.get('/databases', listDB);
+// router.get('/databases', listDB);
 // router.post('/current-user', authCheck, currentUser);
 // router.post('/current-admin', authCheck, adminCheck, currentUser);
 
