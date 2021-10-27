@@ -43,12 +43,10 @@ exports.read = async (req, res) => {
   const product = await ProductProfile.findOne({ slug: req.params.slug })
     .populate({ path: 'reviews', populate: { path: 'postedBy' } })
     .exec();
-  console.log(product);
   res.json(product);
 };
 
 exports.update = async (req, res) => {
-  console.log(req.body);
   try {
     if (req.body.title) {
       req.body.slug = slugify(req.body.title);
@@ -84,7 +82,6 @@ exports.list = async (req, res) => {
 };
 exports.related = async (req, res) => {
   const { brand, page } = req.body;
-  console.log(page);
   const currentPage = page;
   const perPage = 3;
   try {
@@ -187,6 +184,7 @@ const handlePrice = async (req, res, price) => {
     const result = await ProductProfile.find({
       price: { $gte: price[0], $lte: price[1] },
     }).exec();
+    console.log(result);
     res.json(result);
   } catch (error) {
     console.log(error);

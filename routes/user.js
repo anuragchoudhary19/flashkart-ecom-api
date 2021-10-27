@@ -14,10 +14,12 @@ const {
   addToWishlist,
   wishlist,
   removeFromWishList,
+  getAddress,
 } = require('../controllers/user');
 
 const { updateOrderStatus } = require('../controllers/admin');
 
+router.get('/user/address', authCheck, getAddress);
 router.post('/user/address', authCheck, addAddress);
 router.delete('/user/address/:id', authCheck, removeAddress);
 //orders

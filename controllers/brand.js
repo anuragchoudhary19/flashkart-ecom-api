@@ -22,7 +22,6 @@ exports.read = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  console.log(res);
   const { name } = req.body;
   try {
     // if (oldCategory !== category) {

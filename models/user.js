@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema(
         city: String,
         pincode: Number,
         state: String,
+        selected: { type: Boolean, default: false },
       },
     ],
   },
