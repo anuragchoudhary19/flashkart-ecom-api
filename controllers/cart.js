@@ -23,21 +23,17 @@ exports.addToCart = async (req, res) => {
       let itemAlreadyInCart = false;
       if (products.length > 0) {
         for (let i = 0; i < products.length; i++) {
-          if (products[i].product._id.toString() === id.toString()) {
+          if (products[i].product.toString() === id.toString()) {
             itemAlreadyInCart = true;
-            return;
+            return res.json({ alreadyInCart: true });
           }
         }
-        if (itemAlreadyInCart) {
-          return res.json(cart);
-        } else {
-          let products = [...cart.products];
-          products.push({ product: product, count: 1 });
-          let { cartTotal, cartTotalAfterDiscount } = getCartTotal(products);
-          cart.products.push({ product: id, count: 1 });
-          cart.cartTotal = cartTotal;
-          cart.cartTotalAfterDiscount = cartTotalAfterDiscount;
-        }
+        let newProducts = [...cart.products];
+        newProducts.push({ product: product, count: 1 });
+        let { cartTotal, cartTotalAfterDiscount } = getCartTotal(newProducts);
+        cart.products.push({ product: id, count: 1 });
+        cart.cartTotal = cartTotal;
+        cart.cartTotalAfterDiscount = cartTotalAfterDiscount;
       } else {
         let products = [{ product: product, count: 1 }];
         let { cartTotal, cartTotalAfterDiscount } = getCartTotal(products);
