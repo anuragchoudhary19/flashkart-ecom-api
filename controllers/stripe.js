@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const Cart = require('../models/cart');
+const Order = require('../models/order');
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
@@ -14,14 +15,13 @@ exports.createPaymentIntent = async (req, res) => {
     amount: cartTotalAfterDiscount * 100,
     currency: 'INR',
   });
-  console.log(paymentIntent);
+  // console.log(paymentIntent);
   res.send({ clientSecret: paymentIntent.client_secret });
 };
 
 // exports.refundPayment = async (req, res) => {
-//   const user = await User.findOne({ email: req.user.email }).exec();
 //   //get user cart total
-//   const order = await Order.findOne({ orderedBy: user._id }).exec();
+//   const order = await Order.findOne({ orderedBy: req.user._id }).exec();
 
 //   const refund = await stripe.refunds.create({
 //    payment_intent=''

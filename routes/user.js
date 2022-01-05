@@ -10,6 +10,7 @@ const {
   addAddress,
   removeAddress,
   createOrder,
+  cancelOrder,
   getOrders,
   addToWishlist,
   wishlist,
@@ -24,6 +25,7 @@ router.post('/user/address', authCheck, addAddress);
 router.delete('/user/address/:id', authCheck, removeAddress);
 //orders
 router.post('/user/order', authCheck, createOrder);
+router.delete('/user/order/:orderId', authCheck, cancelOrder);
 router.get('/user/order', authCheck, getOrders);
 router.post('/admin/order/status', adminCheck, authCheck, updateOrderStatus);
 //wishlist

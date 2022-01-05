@@ -63,31 +63,33 @@ exports.createOrder = async (req, res) => {
     console.log(error);
   }
 };
-// exports.cancelOrder = async (req, res) => {
-//   const { orderId } = req.body;
-//   const user = await User.findOne({ email: req.user.email }).exec();
-//   let order = await Order.findOneAndUpdate({ orderedBy: user._id }).exec();
-//   let { products } = await Cart.findOne({ orderedBy: user._id }).exec();
-//   let newOrder = await new Order({ products, paymentIntent, orderedBy: user._id }).save();
-
-//   //decrement quanlity increment sold
-//   let bulkOptions = products.map((item) => {
-//     return {
-//       updateOne: {
-//         filter: { _id: item.product._id },
-//         update: { $inc: { quantity: -item.count, sold: +item.count } },
-//       },
-//     };
-//   });
-//   let updated = await ProductProfile.bulkWrite(bulkOptions, {});
-//   console.log('decrement quanlity increment sold----->', updated);
-//   res.json({ ok: true });
-// };
+exports.cancelOrder = async (req, res) => {
+  const { orderId } = req.params;
+  let order = await Order.findOneAndUpdate({ _id: orderId }, { orderStatus: 'Cancelled' }).exec();
+  const { products } = order;
+  //decrement quanlity increment sold
+  let bulkOptions = products.map((item) => {
+    return {
+      updateOne: {
+        filter: { _id: item.product },
+        update: { $inc: { quantity: -item.count, sold: +item.count } },
+      },
+    };
+  });
+  let updated = await ProductProfile.bulkWrite(bulkOptions, {});
+  res.json({ ok: true });
+};
 
 exports.getOrders = async (req, res) => {
-  let user = await User.findOne({ _id: req.user._id }).exec();
-  let userOrders = await Order.find({ orderedBy: user._id }).populate('products.product').exec();
-  res.json(userOrders);
+  try {
+    let userOrders = await Order.find({ orderedBy: req.user._id })
+      .populate('products.product')
+      .sort({ createdAt: -1 })
+      .exec();
+    res.json(userOrders);
+  } catch (error) {
+    res.json({ error: error });
+  }
 };
 
 // addToWishlist, wishlist, removeFromWishList,
