@@ -68,6 +68,12 @@ exports.list = async (req, res) => {
   const currentPage = page;
   const perPage = 4;
   try {
+    const count = await ProductProfile.estimatedDocumentCount().exec();
+    const totalPages = Math.floor(count / perPage) + (count % perPage);
+    let isLastPage = false;
+    if (currentPage === totalPages) {
+      isLastPage = true;
+    }
     const profiles = await ProductProfile.find({})
       .skip((currentPage - 1) * perPage)
       .populate('brand')
@@ -75,7 +81,7 @@ exports.list = async (req, res) => {
       .sort([[sort, order]])
       .limit(perPage)
       .exec();
-    res.json(profiles);
+    res.json({ profiles, isLastPage });
   } catch (err) {
     console.log(err);
   }
