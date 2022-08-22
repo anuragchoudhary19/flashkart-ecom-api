@@ -3,6 +3,7 @@ const User = require('../models/user');
 const Brand = require('../models/brand');
 const Product = require('../models/product');
 const _ = require('lodash');
+let { getOrSetCache } = require('./redis');
 const slugify = require('slugify');
 
 exports.create = async (req, res) => {
@@ -40,10 +41,17 @@ exports.remove = async (req, res) => {
 };
 
 exports.read = async (req, res) => {
-  const product = await ProductProfile.findOne({ slug: req.params.slug })
-    .populate({ path: 'reviews', populate: { path: 'postedBy' } })
-    .exec();
-  res.json(product);
+  try {
+    const product = await getOrSetCache(req.params.slug, async () => {
+      const product = await ProductProfile.findOne({ slug: req.params.slug })
+        .populate({ path: 'reviews', populate: { path: 'postedBy' } })
+        .exec();
+      return product;
+    });
+    return res.json(product);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 exports.update = async (req, res) => {
@@ -65,6 +73,9 @@ exports.update = async (req, res) => {
 
 exports.list = async (req, res) => {
   const { sort, order, page } = req.body;
+  let listType;
+  if (sort === 'sold') listType = 'bestsellers';
+  if (sort === 'createdAt') listType = 'createdAt';
   const currentPage = page;
   const perPage = 4;
   try {
@@ -74,13 +85,16 @@ exports.list = async (req, res) => {
     if (currentPage === totalPages) {
       isLastPage = true;
     }
-    const profiles = await ProductProfile.find({})
-      .skip((currentPage - 1) * perPage)
-      .populate('brand')
-      .populate('product')
-      .sort([[sort, order]])
-      .limit(perPage)
-      .exec();
+    const profiles = await getOrSetCache(`${listType}:${currentPage}`, async () => {
+      const profiles = await ProductProfile.find({})
+        .skip((currentPage - 1) * perPage)
+        .populate('brand')
+        .populate('product')
+        .sort([[sort, order]])
+        .limit(perPage)
+        .exec();
+      return profiles;
+    });
     res.json({ profiles, isLastPage });
   } catch (err) {
     console.log(err);

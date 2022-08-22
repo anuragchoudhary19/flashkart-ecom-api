@@ -1,4 +1,5 @@
 const User = require('../models/user');
+let { getOrSetCache } = require('./redis');
 
 exports.checkDuplicateEmail = async (req, res) => {
   const { email } = req.body;
@@ -35,8 +36,11 @@ exports.createOrUpdateUser = async (req, res) => {
 
 exports.currentUser = async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.user._id }).select('-createdAt -updatedAt -__v').exec();
-    res.json(user);
+    const user = await getOrSetCache(req.user.email, async () => {
+      const user = await User.findOne({ _id: req.user._id }).select('-createdAt -updatedAt -__v').exec();
+      return user;
+    });
+    return res.json(user);
   } catch (error) {
     res.json(error);
     console.log(error);
