@@ -12,15 +12,11 @@ exports.authCheck = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
-    if (err.errorInfo.code) {
-      res.status(400).send({
-        err: err.errorInfo.code,
-      });
-    } else {
-      res.status(400).send({
-        err,
-      });
-    }
+    console.log(err);
+
+    res.status(400).send({
+      err,
+    });
   }
 };
 
