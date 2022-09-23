@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
+const requestIp = require('request-ip');
 require('dotenv').config();
 
 //app
@@ -21,11 +22,12 @@ mongoose
   .catch((err) => console.log('DB CONNECTION ERR', err));
 
 //middleware
+app.use(cors());
+app.options('*', cors());
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '2mb' }));
-
-app.use(cors());
+app.use(requestIp.mw());
 
 //route middleware
 fs.readdirSync('./routes').map((r) => app.use('/api', require('./routes/' + r)));

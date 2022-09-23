@@ -95,7 +95,7 @@ exports.list = async (req, res) => {
         .exec();
       return profiles;
     });
-    res.json({ profiles, isLastPage });
+    return res.json({ profiles, isLastPage });
   } catch (err) {
     console.log(err);
   }

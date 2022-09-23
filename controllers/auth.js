@@ -1,5 +1,5 @@
 const User = require('../models/user');
-let { getOrSetCache } = require('./redis');
+let { getOrSetCache, analytics } = require('./redis');
 
 exports.checkDuplicateEmail = async (req, res) => {
   const { email } = req.body;
@@ -16,6 +16,7 @@ exports.checkDuplicateEmail = async (req, res) => {
 };
 
 exports.createOrUpdateUser = async (req, res) => {
+  analytics(req.clientIp);
   const { name, picture, email } = req.user;
   try {
     const user = await User.findOneAndUpdate({ email: email }, { name: email.split('@')[0], picture }, { new: true });
