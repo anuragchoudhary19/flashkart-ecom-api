@@ -3,27 +3,27 @@ const Product = require('../models/product');
 const slugify = require('slugify');
 
 exports.create = async (req, res) => {
-  const { name } = req.body;
   try {
+    const { name } = req.body;
     const brand = await new Brand({ name, slug: slugify(name).toLowerCase() }).save();
-    res.json(brand);
+    return res.json(brand);
   } catch (err) {
     if (err.codeName === 'DuplicateKey') {
-      res.json('Duplicate brand name not allowed');
+      return res.json('Duplicate brand name not allowed');
     } else {
-      res.json(err);
+      return res.json(err);
     }
   }
 };
 
 exports.read = async (req, res) => {
   let brand = await Brand.findOne({ slug: req.params.slug }).exec();
-  res.json(brand);
+  return res.json(brand);
 };
 
 exports.update = async (req, res) => {
-  const { name } = req.body;
   try {
+    const { name } = req.body;
     // if (oldCategory !== category) {
     //   const removedCategory = Brand.findOneAndUpdate(
     //     { slug: req.params.slug },
@@ -38,7 +38,6 @@ exports.update = async (req, res) => {
       { new: true }
     );
     res.json(updated);
-    console.log(updated);
   } catch (err) {
     if (err.codeName === 'DuplicateKey') {
       res.status(400).send('Duplicate brand name not allowed');
@@ -68,12 +67,3 @@ exports.listBrandsProductProfile = async (req, res) => {
     .exec();
   res.json(brands);
 };
-
-// exports.getSubs = async (req, res) => {
-//   try {
-//     const subs = await Product.find({ parent: req.params._id }).exec();
-//     res.json(subs);
-//   } catch (err) {
-//     res.status(400).json('Get subs failed');
-//   }
-// };

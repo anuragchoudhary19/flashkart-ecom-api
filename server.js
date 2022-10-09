@@ -28,7 +28,6 @@ app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(requestIp.mw());
-
 //route middleware
 fs.readdirSync('./routes').map((r) => app.use('/api', require('./routes/' + r)));
 

@@ -93,6 +93,7 @@ exports.list = async (req, res) => {
         .sort([[sort, order]])
         .limit(perPage)
         .exec();
+      console.log(profiles);
       return profiles;
     });
     return res.json({ profiles, isLastPage });

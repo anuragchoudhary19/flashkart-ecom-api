@@ -2,56 +2,52 @@ const User = require('../models/user');
 const Cart = require('../models/cart');
 const ProductProfile = require('../models/productProfile');
 
+const cart = {};
 const getCartTotal = (items) => {
-  let cartTotal = 0;
-  let cartTotalAfterDiscount = 0;
+  let total = 0;
+  let totalAfterDiscount = 0;
   for (let i = 0; i < items.length; i++) {
-    let totalPrice = parseInt(items[i].product.price) * items[i].count;
-    cartTotal += totalPrice;
-    cartTotalAfterDiscount += totalPrice * (1 - parseInt(items[i].product.discount) / 100);
+    let totalCost = parseInt(items[i].product.price) * items[i].count;
+    total += totalCost;
+    totalAfterDiscount += totalCost * (1 - parseInt(items[i].product.discount) / 100);
   }
-  return { cartTotal, cartTotalAfterDiscount };
+  return [total, totalAfterDiscount];
+};
+const addToCartIfNotPresent = (products, item) => {
+  let newArray = [...products];
+  let found = false;
+  for (let i = 0; i < newArray.length; i++) {
+    if (newArray[i].product._id.toString() === item._id.toString()) {
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    newArray.push({ product: item, count: 1 });
+  }
+  return [newArray, found];
 };
 
 exports.addToCart = async (req, res) => {
-  const { id } = req.body;
   try {
-    var product = await ProductProfile.findOne({ _id: id }).exec();
-    const cart = await Cart.findOne({ orderedBy: req.user._id }).exec();
+    const { id } = req.body;
+    const product = await ProductProfile.findOne({ _id: id }).select('price discount').exec();
+    const cart = await Cart.findOne({ orderedBy: req.user._id }).populate('products.product', 'price discount').exec();
     if (cart !== null) {
       const { products } = cart;
-      let itemAlreadyInCart = false;
-      if (products.length > 0) {
-        for (let i = 0; i < products.length; i++) {
-          if (products[i].product.toString() === id.toString()) {
-            itemAlreadyInCart = true;
-            return res.json({ alreadyInCart: true });
-          }
-        }
-        let newProducts = [...cart.products];
-        newProducts.push({ product: product, count: 1 });
-        let { cartTotal, cartTotalAfterDiscount } = getCartTotal(newProducts);
-        cart.products.push({ product: id, count: 1 });
-        cart.cartTotal = cartTotal;
-        cart.cartTotalAfterDiscount = cartTotalAfterDiscount;
-      } else {
-        let products = [{ product: product, count: 1 }];
-        let { cartTotal, cartTotalAfterDiscount } = getCartTotal(products);
-        cart.products.push({ product: id, count: 1 });
-        cart.cartTotal = cartTotal;
-        cart.cartTotalAfterDiscount = cartTotalAfterDiscount;
-      }
-      let updatedCart = await Cart.findOneAndUpdate(
-        { orderedBy: req.user._id },
-        { products: cart.products, cartTotal: cart.cartTotal, cartTotalAfterDiscount: cart.cartTotalAfterDiscount },
-        { new: true }
-      )
+      let [newProducts, alreadyInCart] = addToCartIfNotPresent(products, product);
+      if (alreadyInCart) return res.json({ alreadyInCart: true });
+      let [total, totalAfterDiscount] = getCartTotal(newProducts);
+      cart.products.push({ product: id, count: 1 });
+      cart.cartTotal = total;
+      cart.cartTotalAfterDiscount = totalAfterDiscount;
+      await cart.save();
+      const updatedCart = await Cart.findOne({ orderedBy: req.user._id })
         .select('-_id products cartTotal cartTotalAfterDiscount coupon')
         .populate('products.product', 'title slug price discount images');
-      console.log(new Date());
       return res.json(updatedCart);
     } else {
-      let products = [
+      const products = [
         {
           product: id,
           count: 1,
@@ -76,6 +72,7 @@ exports.addToCart = async (req, res) => {
     console.log(err);
   }
 };
+
 exports.getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ orderedBy: req.user._id })
@@ -101,32 +98,31 @@ exports.getCartValue = async (req, res) => {
         }
       }).count,
     }));
-    let { cartTotal, cartTotalAfterDiscount } = getCartTotal(products);
-    let cart = { products, cartTotal, cartTotalAfterDiscount };
+    let [total, totalAfterDiscount] = getCartTotal(products);
+    let cart = { products, cartTotal: total, cartTotalAfterDiscount: totalAfterDiscount };
     res.json(cart);
   } catch (error) {
     console.log(error);
   }
 };
 
-const updateCartHandle = (cart, id, operation) => {
-  for (let i = 0; i < cart.products.length; i++) {
-    if (cart.products[i].product._id.toString() === id.toString()) {
+const updateProdcuts = (products, id, operation) => {
+  for (let i = 0; i < products.length; i++) {
+    if (products[i].product._id == id) {
       if (operation === 'add') {
-        cart.products[i].count += 1;
-      }
-      if (operation === 'subtract') {
-        cart.products[i].count -= 1;
-        if (cart.products[i].count === 0) {
-          cart.products.splice(i, 1);
+        products[i].count += 1;
+      } else if (operation === 'subtract') {
+        products[i].count -= 1;
+        if (products[i].count === 0) {
+          products.splice(i, 1);
         }
+      } else if (operation === 'remove' || operation === 'save') {
+        products.splice(i, 1);
       }
-      if (operation === 'remove' || operation === 'save') {
-        cart.products.splice(i, 1);
-      }
-      return cart;
+      return products;
     }
   }
+  return products;
 };
 
 exports.updateCart = async (req, res) => {
@@ -136,12 +132,18 @@ exports.updateCart = async (req, res) => {
       .select('products cartTotal cartTotalAfterDiscount coupon')
       .populate('products.product', 'title slug price discount images')
       .exec();
-    const newCart = updateCartHandle(cart, id, operation);
-    const { cartTotal, cartTotalAfterDiscount } = getCartTotal(newCart.products);
-    newCart.cartTotal = cartTotal;
-    newCart.cartTotalAfterDiscount = cartTotalAfterDiscount;
-    console.log(newCart);
-    await cart.updateOne(newCart);
+    const { products } = cart;
+    const updatedProducts = updateProdcuts(products, id, operation);
+    if (updatedProducts.length === 0) {
+      const cart = await Cart.findOneAndRemove({ orderedBy: req.user._id }).exec();
+      const user = await User.findOneAndUpdate({ _id: req.user._id }, { cart: null }).exec();
+      return res.json(null);
+    }
+    const [total, totalAfterDiscount] = getCartTotal(updatedProducts);
+    cart.products = updatedProducts;
+    cart.cartTotal = total;
+    cart.cartTotalAfterDiscount = totalAfterDiscount;
+    await cart.save();
     res.json(cart);
   } catch (err) {
     console.log(err);
@@ -190,9 +192,8 @@ exports.addAddressToCart = async (req, res) => {
 };
 exports.emptyCart = async (req, res) => {
   try {
-    const cart = await Cart.findOneAndRemove({ orderedBy: req.user._id }).exec();
-    const user = await User.findOneAndUpdate({ _id: req.user._id }, { cart: null }).exec();
-    console.log(user);
+    await Cart.findOneAndRemove({ orderedBy: req.user._id }).exec();
+    await User.findOneAndUpdate({ _id: req.user._id }, { cart: null }).exec();
     res.json({ ok: true });
   } catch (error) {
     console.log(error);
