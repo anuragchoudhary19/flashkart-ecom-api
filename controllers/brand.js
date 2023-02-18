@@ -56,7 +56,7 @@ exports.remove = async (req, res) => {
 };
 exports.list = async (req, res) => {
   const brands = await Brand.find({}).sort({ createdAt: 1 }).populate('products').populate('products.profile').exec();
-  res.json(brands);
+  return res.json(brands);
 };
 
 exports.listBrandsProductProfile = async (req, res) => {
