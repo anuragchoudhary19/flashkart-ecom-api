@@ -29,6 +29,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(requestIp.mw());
 //route middleware
+app.get('/', (res, req) => {
+  return res.send('ok');
+});
 fs.readdirSync('./routes').map((r) => app.use('/api', require('./routes/' + r)));
 
 //port
